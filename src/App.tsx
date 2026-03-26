@@ -40,8 +40,9 @@ export default function App() {
   // --- Gestion du Responsive ---
   useEffect(() => {
     const handleResize = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      // Réduction de 5% de la taille par rapport à l'affichage final
+      const width = window.innerWidth * 0.95;
+      const height = window.innerHeight * 0.95;
       
       // Si on redimensionne pendant la course, on ajuste proportionnellement les positions X
       if (snailsRef.current.length > 0) {
@@ -258,21 +259,23 @@ export default function App() {
     <div className="min-h-screen bg-[#111] text-white font-mono flex flex-col items-center justify-center p-4 select-none overflow-hidden relative">
       <OldFilmEffect />
       
-      {/* Header Icons */}
-      <div className="absolute top-6 right-6 flex gap-4 z-50">
-        <button 
-          onClick={() => setShowHelp(true)}
-          className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
-        >
-          <HelpCircle size={24} />
-        </button>
-        <button 
-          onClick={() => setShowSettings(true)}
-          className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
-        >
-          <Settings size={24} />
-        </button>
-      </div>
+      {/* Header Icons - Only visible on Start Screen */}
+      {gameState === 'START' && (
+        <div className="absolute top-6 right-6 flex gap-4 z-50">
+          <button 
+            onClick={() => setShowHelp(true)}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+          >
+            <HelpCircle size={24} />
+          </button>
+          <button 
+            onClick={() => setShowSettings(true)}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+          >
+            <Settings size={24} />
+          </button>
+        </div>
+      )}
 
       {/* Main Game Area */}
       {gameState === 'START' ? (
@@ -292,13 +295,16 @@ export default function App() {
           </div>
         </div>
       ) : (
-        <div className="relative w-full h-full bg-black flex items-center justify-center p-8">
-          <div className="border-4 border-white overflow-hidden bg-[#111] relative w-full h-full">
+        <div className="relative w-full h-full bg-black flex items-center justify-center">
+          <div 
+            className="border-4 border-white overflow-hidden bg-[#111] relative"
+            style={{ width: canvasSize.width, height: canvasSize.height }}
+          >
             <canvas
               ref={canvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              className="block w-full h-full"
+              className="block"
             />
 
           {/* Overlay: Countdown */}
