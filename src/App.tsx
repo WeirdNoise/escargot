@@ -14,6 +14,8 @@ interface Snail {
   isPlayer: boolean;
   finished: boolean;
   finishTime?: number;
+  baseSpeedFactor: number;
+  trail: { x: number, y: number, time: number }[];
 }
 
 const SNAIL_COUNT = 6;
@@ -75,6 +77,9 @@ export default function App() {
         speed: 0,
         isPlayer: i === 0,
         finished: false,
+        // Facteur de vitesse de base aléatoire pour varier les performances (0.6 à 1.4)
+        baseSpeedFactor: i === 0 ? 1 : 0.6 + Math.random() * 0.8,
+        trail: []
       });
     }
     snailsRef.current = newSnails;
@@ -173,12 +178,44 @@ export default function App() {
     // Multiplicateur de difficulté (réduit pour être plus facile)
     const diffMult = difficulty === 'FACILE' ? 0.2 : difficulty === 'NORMAL' ? 0.4 : 0.8;
 
+    const now = Date.now();
+
     // Mise à jour et dessin
     snailsRef.current.forEach((snail) => {
+      // Mise à jour de la trace
+      if (gameState === 'RACING' && !snail.finished) {
+        snail.trail.push({ x: snail.x, y: snail.y + 10, time: now });
+      }
+      
+      // Nettoyage de la trace (disparaît après 2 secondes)
+      snail.trail = snail.trail.filter(p => now - p.time < 2000);
+
+      // Dessin de la trace
+      if (snail.trail.length > 1) {
+        ctx.beginPath();
+        ctx.lineWidth = 4;
+        snail.trail.forEach((p, index) => {
+          const age = now - p.time;
+          const opacity = Math.max(0, 1 - age / 2000) * 0.3;
+          ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+          
+          if (index === 0) ctx.moveTo(p.x - 20, p.y);
+          else ctx.lineTo(p.x - 20, p.y);
+          
+          // On dessine par segments pour gérer l'opacité dégressive
+          if (index > 0) {
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(p.x - 20, p.y);
+          }
+        });
+      }
+
       if (gameState === 'RACING' && !snail.finished) {
         if (!snail.isPlayer) {
-          const baseSpeed = (canvasSize.width / 15000) * diffMult;
-          const fluctuation = Math.random() * (canvasSize.width / 10000) * diffMult;
+          // Utilisation du baseSpeedFactor pour plus de différence de performance
+          const baseSpeed = (canvasSize.width / 15000) * diffMult * snail.baseSpeedFactor;
+          const fluctuation = (Math.random() - 0.3) * (canvasSize.width / 8000) * diffMult;
           snail.x += (baseSpeed + fluctuation) * deltaTime;
         }
 
